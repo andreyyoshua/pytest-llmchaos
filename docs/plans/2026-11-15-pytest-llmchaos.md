@@ -526,7 +526,9 @@ def test_of_json_sets_the_content_type_and_extra_headers():
 def _interactions():
     return [
         Interaction(
-            RecordedRequest("POST", URL, {"content-type": "application/json"}, body={"b": 1, "a": 2}),
+            RecordedRequest(
+                "POST", URL, {"content-type": "application/json"}, body={"b": 1, "a": 2}
+            ),
             RecordedResponse.of_json(200, {"z": 1}),
         ),
         Interaction(
@@ -981,7 +983,11 @@ def test_filter_headers_keeps_only_the_allowlist_and_lowercases():
 def test_find_secrets_reports_key_patterns_with_their_path():
     document = {
         "interactions": [
-            {"request": {"body": {"messages": [{"content": "use sk-proj-abcdefghijklmnopqrstuvwxyz"}]}}}
+            {
+                "request": {
+                    "body": {"messages": [{"content": "use sk-proj-abcdefghijklmnopqrstuvwxyz"}]}
+                }
+            }
         ]
     }
     assert redaction.find_secrets(document, environ={}) == [
@@ -1042,9 +1048,7 @@ def find_secrets(document: Any, environ: Mapping[str, str] | None = None) -> lis
     """JSON paths of every string in ``document`` that looks like an API key."""
     env = os.environ if environ is None else environ
     literals = [
-        value
-        for name in KEY_ENV_VARS
-        if len(value := env.get(name, "")) >= MIN_ENV_SECRET_LENGTH
+        value for name in KEY_ENV_VARS if len(value := env.get(name, "")) >= MIN_ENV_SECRET_LENGTH
     ]
     hits: list[str] = []
     _walk(document, "$", literals, hits)
@@ -1449,7 +1453,15 @@ def _response(output: list[dict[str, Any]]) -> RecordedResponse:
 def openai_response() -> RecordedResponse:
     text = {"type": "output_text", "text": FULL_TEXT, "annotations": []}
     return _response(
-        [{"type": "message", "id": "msg_1", "role": "assistant", "status": "completed", "content": [text]}]
+        [
+            {
+                "type": "message",
+                "id": "msg_1",
+                "role": "assistant",
+                "status": "completed",
+                "content": [text],
+            }
+        ]
     )
 
 
@@ -1492,7 +1504,12 @@ def anthropic_tool_message() -> RecordedResponse:
     return _message(
         [
             {"type": "text", "text": "Let me check."},
-            {"type": "tool_use", "id": "toolu_1", "name": "get_weather", "input": dict(TOOL_ARGUMENTS)},
+            {
+                "type": "tool_use",
+                "id": "toolu_1",
+                "name": "get_weather",
+                "input": dict(TOOL_ARGUMENTS),
+            },
         ],
         "tool_use",
     )
@@ -1937,7 +1954,9 @@ def _delta(chunk: dict[str, Any]) -> dict[str, Any]:
 
 def _truncate_chat_stream(events: Sequence[SSEEvent]) -> list[SSEEvent]:
     chunks = _chat_chunks(events)
-    pieces = [(i, _delta(chunk), "content") for i, chunk in chunks.items() if _delta(chunk).get("content")]
+    pieces = [
+        (i, _delta(chunk), "content") for i, chunk in chunks.items() if _delta(chunk).get("content")
+    ]
     if not pieces:
         raise FaultNotApplicableError(f"truncated() {_NO_TEXT}")
     changed, dropped = truncate_pieces(pieces)
@@ -2159,7 +2178,11 @@ class AnthropicProvider:
         body = _message_body(response)
         blocks = body["content"]
         index = next(
-            (i for i, block in enumerate(blocks) if block.get("type") == "text" and block.get("text")),
+            (
+                i
+                for i, block in enumerate(blocks)
+                if block.get("type") == "text" and block.get("text")
+            ),
             None,
         )
         if index is None:
@@ -2649,8 +2672,7 @@ class Session:
                         f"{fault!r} targets call {target}, which has already been served"
                     )
                 if isinstance(fault, MutateFault) and any(
-                    isinstance(s.fault, MutateFault) and s.target == target
-                    for s in self._scheduled
+                    isinstance(s.fault, MutateFault) and s.target == target for s in self._scheduled
                 ):
                     raise ValueError(
                         f"call {target} already has a mutate fault; only one is allowed per call"
@@ -2690,7 +2712,9 @@ class Session:
         interaction = Interaction(
             request=replace(
                 request,
-                headers=redaction.filter_headers(request.headers, redaction.REQUEST_HEADER_ALLOWLIST),
+                headers=redaction.filter_headers(
+                    request.headers, redaction.REQUEST_HEADER_ALLOWLIST
+                ),
             ),
             response=replace(
                 response,
@@ -3118,8 +3142,7 @@ def _cut_stream(lib: ModuleType, chunks: list[bytes]) -> Any:
 
     def error() -> Exception:
         return lib.RemoteProtocolError(
-            "peer closed connection without sending complete message body "
-            "(simulated by llmchaos)"
+            "peer closed connection without sending complete message body (simulated by llmchaos)"
         )
 
     class CutStream(lib.SyncByteStream, lib.AsyncByteStream):  # pyright: ignore[reportUntypedBaseClass]
@@ -3336,10 +3359,13 @@ def test_dir(llm):
 
 
 def test_records_then_replays_without_secrets(pytester, monkeypatch):
-    source = CLIENT + """
+    source = (
+        CLIENT
+        + """
 def test_chat(llm):
     assert post().json()["choices"][0]["message"]["content"] == "The refund was approved yesterday."
 """
+    )
     record_then_replay(pytester, monkeypatch, source, passed=1)
     path = pytester.path / "cassettes" / "test_app" / "test_chat.json"
     saved = json.loads(path.read_text(encoding="utf-8"))
@@ -3446,13 +3472,21 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         "all: re-record every test.",
     )
     parser.addini(
-        "llmchaos_cassette_dir", "Cassette directory, relative to each test file.", default="cassettes"
+        "llmchaos_cassette_dir",
+        "Cassette directory, relative to each test file.",
+        default="cassettes",
     )
     parser.addini(
-        "llmchaos_ignore", "Dotted request-body paths ignored when matching.", type="linelist", default=[]
+        "llmchaos_ignore",
+        "Dotted request-body paths ignored when matching.",
+        type="linelist",
+        default=[],
     )
     parser.addini(
-        "llmchaos_openai_hosts", "Extra hosts treated as OpenAI-compatible.", type="linelist", default=[]
+        "llmchaos_openai_hosts",
+        "Extra hosts treated as OpenAI-compatible.",
+        type="linelist",
+        default=[],
     )
     parser.addini(
         "llmchaos_anthropic_hosts", "Extra hosts treated as Anthropic.", type="linelist", default=[]
@@ -3576,7 +3610,7 @@ import openai  # noqa: F401
 ```python
 from harness import prepare, record_then_replay, run
 
-SCENARIOS = '''
+SCENARIOS = """
 import asyncio
 import importlib
 import importlib.util
@@ -3753,7 +3787,7 @@ def test_on_call_targets_the_second_call(llm):
     chat()
     chat(tools=TOOLS)
     assert (llm.calls, llm.attempts) == (2, 3)
-'''
+"""
 
 MISMATCH = """
 import openai
@@ -3823,7 +3857,7 @@ The systematic-debugging rule from Task 12 applies here too.
 ```python
 from harness import prepare, record_then_replay, run
 
-SCENARIOS = '''
+SCENARIOS = """
 import asyncio
 import importlib
 import importlib.util
@@ -3970,7 +4004,7 @@ def test_async_overloaded_recovers(llm):
 
     assert asyncio.run(go()).content[0].text == FULL
     assert llm.attempts == 2
-'''
+"""
 
 MISMATCH = """
 import anthropic
@@ -4398,7 +4432,9 @@ pytestmark = pytest.mark.contract
 
 OPENAI_MODEL = os.environ.get("LLMCHAOS_OPENAI_MODEL", "gpt-5-mini")
 ANTHROPIC_MODEL = os.environ.get("LLMCHAOS_ANTHROPIC_MODEL", "claude-haiku-5-5")
-needs_openai = pytest.mark.skipif(not os.environ.get("OPENAI_API_KEY"), reason="needs OPENAI_API_KEY")
+needs_openai = pytest.mark.skipif(
+    not os.environ.get("OPENAI_API_KEY"), reason="needs OPENAI_API_KEY"
+)
 needs_anthropic = pytest.mark.skipif(
     not os.environ.get("ANTHROPIC_API_KEY"), reason="needs ANTHROPIC_API_KEY"
 )
@@ -4435,7 +4471,15 @@ def test_openai_mutations_find_their_targets(monkeypatch, tmp_path):
         chat(model=OPENAI_MODEL, messages=PROMPT)
         list(chat(model=OPENAI_MODEL, messages=PROMPT, stream=True))
         chat(model=OPENAI_MODEL, messages=WEATHER, tools=tools, tool_choice="required")
-        list(chat(model=OPENAI_MODEL, messages=WEATHER, tools=tools, tool_choice="required", stream=True))
+        list(
+            chat(
+                model=OPENAI_MODEL,
+                messages=WEATHER,
+                tools=tools,
+                tool_choice="required",
+                stream=True,
+            )
+        )
         client.responses.create(model=OPENAI_MODEL, input=PROMPT[0]["content"])
 
     text, text_stream, tool, tool_stream, response = (
@@ -4480,14 +4524,24 @@ def test_anthropic_mutations_find_their_targets(monkeypatch, tmp_path):
         with client.messages.stream(model=ANTHROPIC_MODEL, max_tokens=200, messages=PROMPT) as s:
             s.get_final_message()
         client.messages.create(
-            model=ANTHROPIC_MODEL, max_tokens=200, messages=WEATHER, tools=tools, tool_choice=any_tool
+            model=ANTHROPIC_MODEL,
+            max_tokens=200,
+            messages=WEATHER,
+            tools=tools,
+            tool_choice=any_tool,
         )
         with client.messages.stream(
-            model=ANTHROPIC_MODEL, max_tokens=200, messages=WEATHER, tools=tools, tool_choice=any_tool
+            model=ANTHROPIC_MODEL,
+            max_tokens=200,
+            messages=WEATHER,
+            tools=tools,
+            tool_choice=any_tool,
         ) as s:
             s.get_final_message()
 
-    text, text_stream, tool, tool_stream = (i.response for i in record(monkeypatch, tmp_path, calls))
+    text, text_stream, tool, tool_stream = (
+        i.response for i in record(monkeypatch, tmp_path, calls)
+    )
     provider = AnthropicProvider()
     provider.truncate(text)
     provider.truncate(text_stream)

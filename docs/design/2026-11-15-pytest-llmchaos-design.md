@@ -55,19 +55,23 @@ Requesting the `llm` fixture turns on interception for that test.
 import pytest
 from llmchaos import faults
 
+
 def test_summarize(llm):
-    assert "refund" in summarize(ticket)          # replayed from cassette
+    assert "refund" in summarize(ticket)  # replayed from cassette
+
 
 def test_survives_rate_limits(llm):
     llm.inject(faults.rate_limit(times=2))
-    assert summarize(ticket)                      # SDK retried twice, then succeeded
+    assert summarize(ticket)  # SDK retried twice, then succeeded
     assert llm.calls == 1
     assert llm.attempts == 3
 
+
 def test_gives_up_cleanly(llm):
-    llm.inject(faults.rate_limit(times=5))        # more than the SDK's 2 default retries
-    with pytest.raises(ServiceBusyError):         # the app's own error type
+    llm.inject(faults.rate_limit(times=5))  # more than the SDK's 2 default retries
+    with pytest.raises(ServiceBusyError):  # the app's own error type
         summarize(ticket)
+
 
 def test_third_agent_step_overloaded(llm):
     llm.inject(faults.overloaded(on_call=3))
@@ -149,6 +153,7 @@ this repo.
 ```python
 class Provider(Protocol):
     name: str
+
     def handles(self, url: httpx.URL) -> bool: ...
     def error_response(self, kind: ErrorKind, retry_after: float | None) -> RecordedResponse: ...
     def truncate(self, response: RecordedResponse) -> RecordedResponse: ...

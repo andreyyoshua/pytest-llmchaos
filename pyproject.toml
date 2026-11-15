@@ -1,0 +1,62 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pytest-llmchaos"
+version = "0.1.0"
+description = "Record real LLM API responses once, replay them offline, and inject provider-accurate failures."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "pytest-llmchaos contributors" }]
+keywords = ["pytest", "llm", "openai", "anthropic", "testing", "chaos", "cassette", "vcr"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Framework :: Pytest",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development :: Testing",
+    "Typing :: Typed",
+]
+dependencies = ["pytest>=8"]
+
+[project.entry-points.pytest11]
+llmchaos = "llmchaos.plugin"
+
+[dependency-groups]
+dev = [
+    "anthropic>=2",
+    "httpx>=0.27",
+    "httpx2>=2.12",
+    "openai>=3",
+    "pyright>=1.1.400",
+    "ruff>=0.14",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/llmchaos"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+ignore = ["E501"]
+
+[tool.pyright]
+include = ["src"]
+pythonVersion = "3.11"
+typeCheckingMode = "standard"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["tests"]
+addopts = ["-ra", "--strict-markers", "-p", "pytester"]
+markers = ["contract: live tests against the real provider APIs (need API keys)"]
