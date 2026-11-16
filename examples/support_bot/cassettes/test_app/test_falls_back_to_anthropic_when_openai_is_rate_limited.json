@@ -1,0 +1,49 @@
+{
+  "interactions": [
+    {
+      "request": {
+        "body": {
+          "max_tokens": 256,
+          "messages": [
+            {
+              "content": "Summarize this support ticket in one sentence:\n\nCustomer 1042 asked for a refund on order 88; it was approved yesterday.",
+              "role": "user"
+            }
+          ],
+          "model": "claude-sonnet-5-5"
+        },
+        "headers": {
+          "anthropic-version": "2026-10-21",
+          "content-type": "application/json"
+        },
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages"
+      },
+      "response": {
+        "body": {
+          "content": [
+            {
+              "text": "The refund was approved yesterday.",
+              "type": "text"
+            }
+          ],
+          "id": "msg_1",
+          "model": "claude-sonnet-5-5",
+          "role": "assistant",
+          "stop_reason": "end_turn",
+          "stop_sequence": null,
+          "type": "message",
+          "usage": {
+            "input_tokens": 10,
+            "output_tokens": 8
+          }
+        },
+        "headers": {
+          "content-type": "application/json"
+        },
+        "status": 200
+      }
+    }
+  ],
+  "version": 1
+}

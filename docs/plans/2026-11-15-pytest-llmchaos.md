@@ -4104,6 +4104,7 @@ def summarize(
         )
     except (
         anthropic.RateLimitError,
+        anthropic.OverloadedError,  # not an InternalServerError before anthropic 1.0
         anthropic.InternalServerError,
         anthropic.APIConnectionError,
     ) as error:

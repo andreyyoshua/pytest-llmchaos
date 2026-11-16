@@ -1,0 +1,50 @@
+{
+  "interactions": [
+    {
+      "request": {
+        "body": {
+          "messages": [
+            {
+              "content": "Summarize this support ticket in one sentence:\n\nCustomer 1042 asked for a refund on order 88; it was approved yesterday.",
+              "role": "user"
+            }
+          ],
+          "model": "gpt-5"
+        },
+        "headers": {
+          "content-type": "application/json"
+        },
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions"
+      },
+      "response": {
+        "body": {
+          "choices": [
+            {
+              "finish_reason": "stop",
+              "index": 0,
+              "message": {
+                "content": "The refund was approved yesterday.",
+                "role": "assistant"
+              }
+            }
+          ],
+          "created": 0,
+          "id": "chatcmpl-1",
+          "model": "gpt-5",
+          "object": "chat.completion",
+          "usage": {
+            "completion_tokens": 8,
+            "prompt_tokens": 10,
+            "total_tokens": 18
+          }
+        },
+        "headers": {
+          "content-type": "application/json"
+        },
+        "status": 200
+      }
+    }
+  ],
+  "version": 1
+}
