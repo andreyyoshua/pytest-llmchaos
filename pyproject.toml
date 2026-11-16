@@ -26,6 +26,11 @@ classifiers = [
 ]
 dependencies = ["pytest>=8"]
 
+[project.urls]
+Homepage = "https://github.com/andreyyoshua/pytest-llmchaos"
+Issues = "https://github.com/andreyyoshua/pytest-llmchaos/issues"
+Changelog = "https://github.com/andreyyoshua/pytest-llmchaos/blob/main/CHANGELOG.md"
+
 [project.entry-points.pytest11]
 llmchaos = "llmchaos.plugin"
 
