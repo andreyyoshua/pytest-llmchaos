@@ -171,7 +171,7 @@ Adding a provider means adding one module and registering it; nothing else chang
 | Constructor | Kind | Effect |
 |---|---|---|
 | `rate_limit(times=1, retry_after=0.001, on_call=None)` | replace | HTTP 429 with the provider's error body. Sets `retry-after-ms` (exact) and `retry-after` (whole seconds, rounded up). |
-| `overloaded(times=1, on_call=None)` | replace | Anthropic: HTTP 529 `overloaded_error` (`anthropic.OverloadedError` on SDK ≥ 1.0, `InternalServerError` before). OpenAI: HTTP 503 `server_error`. |
+| `overloaded(times=1, on_call=None)` | replace | Anthropic: HTTP 529 `overloaded_error`, raised as `anthropic.OverloadedError` (a subclass of `InternalServerError` only on SDK ≥ 1.0). OpenAI: HTTP 503 `server_error`. |
 | `server_error(times=1, on_call=None)` | replace | HTTP 500. Anthropic `api_error`, OpenAI `server_error`. |
 | `timeout(times=1, on_call=None)` | replace | Raises the intercepted library's `ReadTimeout` immediately. |
 | `connection_error(times=1, on_call=None)` | replace | Raises the intercepted library's `ConnectError` immediately. |
@@ -467,3 +467,9 @@ throwaway spike against both SDKs:**
 Confirmed by the spike: patching `httpx2.HTTPTransport.handle_request` intercepts both
 SDKs; `retry-after-ms: 1` makes SDK retries instant; HTTP 529 raises
 `anthropic.OverloadedError`; `openai` 3.x surfaces a cut stream as `APIConnectionError`.
+
+**2026-11-16, during implementation (legacy SDK lane):**
+
+- `anthropic` 0.125.0 also raises `OverloadedError` for HTTP 529, but there it subclasses
+  `APIStatusError` directly, not `InternalServerError`. §5.1 is corrected; tests and the
+  example catch `OverloadedError` explicitly so they hold on both lanes.

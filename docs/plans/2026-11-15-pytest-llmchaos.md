@@ -28,7 +28,7 @@
 - `openai` ≥ 3.0.0 and `anthropic` ≥ 1.0.0 depend only on `httpx2` 2.x, Pydantic's API-compatible fork of `httpx`. `openai` ≤ 2.46.0 and `anthropic` ≤ 0.125.0 use `httpx`. `httpx2` requires Python ≥ 3.11.
 - Patching `httpx2.HTTPTransport.handle_request` intercepts both current SDKs (spike).
 - Both SDKs read `retry-after-ms` first; a value of `1` makes retries instant. Default `max_retries` is 2. Both retry on 408/409/429/≥500 and on network errors.
-- HTTP 529 maps to `anthropic.OverloadedError`, a subclass of `anthropic.InternalServerError`. OpenAI 503 maps to `openai.InternalServerError`.
+- HTTP 529 maps to `anthropic.OverloadedError`. It subclasses `anthropic.InternalServerError` on SDK ≥ 1.0 but only `APIStatusError` on 0.125.0, so catch it by name. OpenAI 503 maps to `openai.InternalServerError`.
 - Non-httpx exceptions raised in the transport behave differently per SDK. `openai` 3.51 lets them propagate unchanged after 1 attempt. `anthropic` 2.8 retries 3 times and raises `APIConnectionError`. Legacy SDKs also wrap.
 - `openai` 3.x surfaces a stream cut mid-body as `APIConnectionError`, after yielding the chunks received before the cut.
 - Anthropic's stream helper parses tool JSON with `partial_mode=True`, so truncated JSON is silently accepted. That is why `bad_tool_args` drops a key for Anthropic.
@@ -3932,7 +3932,7 @@ def test_rate_limit_recovers(llm):
 
 def test_overloaded_gives_up(llm):
     llm.inject(faults.overloaded(times=3))
-    with pytest.raises(anthropic.InternalServerError) as error:
+    with pytest.raises(anthropic.OverloadedError) as error:
         create()
     assert error.value.status_code == 529
 
